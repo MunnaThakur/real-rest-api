@@ -3,8 +3,9 @@ const mongoose = require("mongoose");
 const cookieParser = require("cookie-parser");
 const morgan = require("morgan");
 const cors = require("cors");
+const dotenv = require("dotenv")
 const authRouter = require("./routes/auth")
-
+dotenv.config();
 const app = express();
 
 app.use(cookieParser());
@@ -34,7 +35,7 @@ app.use("/api/auth", authRouter);
 
 
 //Server conncection
-const PORT = 3000 || process.env.PORT;
+const PORT = process.env.PORT;
 app.listen(PORT,()=>console.log(`Server is listning on port no http://localhost/${PORT}`));
 
 
