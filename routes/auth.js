@@ -1,12 +1,14 @@
 const router = require("express").Router();
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
+const multer = require('multer');
+const path = require("path");
 const AuthModel = require("../model/UserModel");
 const AdminModel = require("../model/AdminModel");
 const protectRoute = require("../middleware/protectRoute");
-const multer = require('multer');
-const path = require("path");
 var url = require('url');  
+
+
 //destination to save images
 const storage = multer.diskStorage({
     destination: './upload/images',
@@ -14,8 +16,9 @@ const storage = multer.diskStorage({
         return cb(null, `${file.fieldname}_${Date.now()}${path.extname(file.originalname)}`)
     }
 })
-
 const upload = multer({storage:storage})
+
+
 
 //Register
 router.post("/register", async(req,res)=>{
@@ -45,17 +48,17 @@ router.post("/login", async(req,res)=>{
         const validate = await bcrypt.compare(req.body.password, user.password)
         !validate && res.status(404).json("Wrong Credentials!");
         
+        // res
+        // .cookie("moon", token, {
+        //   httpOnly: true,
+        //   secure: process.env.NODE_ENV === "development",
+        // });
+            
         const token = jwt.sign({ id: user._id}, "test");
-    // res
-    // .cookie("moon", token, {
-    //   httpOnly: true,
-    //   secure: process.env.NODE_ENV === "development",
-    // });
-
-    res.setHeader(
-        "Set-Cookie",
-        `moon=${token}; Secure; HttpOnly; SameSite=None; Path=127.0.0.1; Max-Age=99999999;`
-      );
+        res.setHeader(
+            "Set-Cookie",
+            `moon=${token}; Secure; HttpOnly; SameSite=None; Path=127.0.0.1; Max-Age=99999999;`
+        );
    
 
         const {password, ...other} = user._doc;
@@ -65,6 +68,7 @@ router.post("/login", async(req,res)=>{
         res.status(500).json("Internal server error")
     }
 })
+
 
 
 
@@ -83,20 +87,20 @@ router.post("/add",protectRoute,upload.single("image"), async(req,res)=>{
         const imagename = req.file.filename;
         const host = req.hostname;
         const protocol = req.protocol;
-    const filePath = `${protocol}://${host}/profile/${imagename}`;
+        const filePath = `${protocol}://${host}/profile/${imagename}`;
 
         const newUser = AdminModel({
           title: req.body.title,
           description: req.body.description,
-        //   photo: `http://localhost:3000/profile/${req.file.filename}`,
-        photo:filePath,
+        //photo: `http://localhost:3000/profile/${req.file.filename}`,
+          photo:filePath,
           facilities: req.body.facilities,
           price : req.body.price
         });
         const user = await newUser.save();
         return res.status(200).json(user);
     } catch (error) {
-        
+        res.status(500).json({message : "Internal server error"});
     }
     return res.json(req.file.filename)
 })
@@ -105,10 +109,17 @@ router.get("/check", (req, res)=>{
     const imagename = req.file.filename;
     const host = req.hostname;
     const protocol = req.protocol;
-const filePath = `${protocol}://${host}/profile/${imagename}`;
+    const filePath = `${protocol}://${host}/profile/${imagename}`;
     return res.json(filePath)
-    console.log(queryString);  
     
 })
 
+router.get("/public-users", async(req,res)=>{
+    try {
+        const data = await AuthModel.find();
+        res.status(200).json({ data });
+      } catch (error) {
+        res.status(500).json({ message: "Internal server error" });
+      }
+})
 module.exports = router;
