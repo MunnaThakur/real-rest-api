@@ -48,17 +48,18 @@ router.post("/login", async(req,res)=>{
         const validate = await bcrypt.compare(req.body.password, user.password)
         !validate && res.status(404).json("Wrong Credentials!");
         
-        // res
-        // .cookie("moon", token, {
-        //   httpOnly: true,
-        //   secure: process.env.NODE_ENV === "development",
-        // });
+        
             
         const token = jwt.sign({ id: user._id}, "test");
-        res.setHeader(
-            "Set-Cookie",
-            `moon=${token}; Secure; HttpOnly; SameSite=None; Path=127.0.0.1; Max-Age=99999999;`
-        );
+        res
+        .cookie("moon", token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+        });
+        // res.setHeader(
+        //     "Set-Cookie",
+        //     `moon=${token}; Secure; HttpOnly; SameSite=None; Path=127.0.0.1; Max-Age=99999999;`
+        // );
    
 
         const {password, ...other} = user._doc;
